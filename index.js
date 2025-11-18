@@ -7,10 +7,12 @@ const jwt = require("jsonwebtoken")
  const cors = require("cors")
 
 app.use(cors({
-    origin: "http://localhost:5174",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   }))
+
+
 
 const bcrypt = require("bcrypt")
 app.use(express.json())
@@ -20,7 +22,7 @@ app.use(CookieParser())
 
 
 const middleWare = (req,res,next)=>{
-    const tok =  req.headers['authorization']
+    const tok =  req.cookies.token
     if(!tok){
         res.json({message:"Plzz SignIn"})
     }else{
@@ -39,7 +41,7 @@ app.use("/dashboard",middleWare)
 
 
 app.get("/dashboard",(req,res)=>{
-    res.status(200).send("Everything is fine")
+    res.status(200).json({message:"Everything is fine"})
 })
 
 app.post("/SignUp",async (req,res)=>{
@@ -49,6 +51,10 @@ app.post("/SignUp",async (req,res)=>{
     }
     const data = await prisma.user.findUnique({
         where:{email:email}
+
+
+
+
     })
     const usernameData = await prisma.user.findFirst({
         where:{username:username}
@@ -90,9 +96,11 @@ app.post("/SignIn", async (req,res)=>{
                 const token = jwt.sign({email:d1[0].email},"23###23",{expiresIn:"24h"})
                 res.cookie("token",token,{
                     httpOnly: true,      
-                    sameSite: "none",     
+                    sameSite: "none",
+                    maxAge: 24 * 60 * 60 * 1000,
+                    secure:false      
                   })
-                res.status(200).json({message:"successfully Login"})
+                res.status(200).json({message:"Successfully Login"})
             }else{
                 res.status(409).json({message:"Invalid Username or Password"})
             }
